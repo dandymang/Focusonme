@@ -113,6 +113,8 @@ const db = firebase.database();
 const DBREF = db.ref('events');
 
 let evs = [];
+let fs = {stars:0, chips:{audio:false, video:false, lighting:false}};
+let charts = {};
 
 // Firebase에서 실시간으로 데이터 로드
 let dbInited = false;
@@ -122,14 +124,17 @@ function initDB(){
     const data = snapshot.val();
     evs = data ? Object.values(data) : [];
     evs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    if(loading) loading.style.display='none';
-    // 현재 활성 탭 갱신
+    if(loading) loading.remove();
     const activeTab = document.querySelector('.tab.on');
     const tabName = activeTab ? activeTab.getAttribute('data-tab') : 'form';
     if(!dbInited || tabName==='form') renderForm();
     if(tabName==='stats') renderStats();
     if(tabName==='list') renderList();
     dbInited = true;
+  }, err => {
+    if(loading) loading.remove();
+    renderForm();
+    console.error('Firebase 에러:', err);
   });
 }
 

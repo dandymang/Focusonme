@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>행사 기록 & 통계</title>
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh;}
+  .header{background:#fff;border-bottom:1px solid #e8e8e5;padding:16px 24px;display:flex;align-items:center;gap:12px;}
+  .header-icon{width:32px;height:32px;background:#1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .header-icon svg{width:18px;height:18px;fill:#fff;}
+  .header h1{font-size:16px;font-weight:600;color:#1a1a1a;}
+  .header-sub{font-size:12px;color:#9b9b97;margin-left:auto;}
+  .container{max-width:960px;margin:0 auto;padding:24px 16px;}
+  .tabs{display:flex;gap:2px;background:#ebebea;border-radius:8px;padding:3px;margin-bottom:24px;width:fit-content;}
+  .tab{padding:7px 18px;border-radius:6px;font-size:13px;font-weight:500;color:#6b6b68;cursor:pointer;border:none;background:none;transition:all .15s;}
+  .tab.on{background:#fff;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+  .pane{display:none;}
+  .pane.on{display:block;}
+  .card{background:#fff;border-radius:12px;border:1px solid #e8e8e5;padding:20px 24px;margin-bottom:16px;}
+  .sec-label{font-size:11px;font-weight:600;letter-spacing:.06em;color:#9b9b97;margin-bottom:10px;text-transform:uppercase;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  .f{display:flex;flex-direction:column;gap:5px;}
+  .f label{font-size:12px;color:#6b6b68;font-weight:500;}
+  .f input,.f select,.f textarea{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid #e8e8e5;border-radius:7px;background:#fff;color:#1a1a1a;outline:none;transition:border .15s;}
+  .f input:focus,.f select:focus,.f textarea:focus{border-color:#a8a8a5;}
+  .f textarea{resize:vertical;min-height:70px;line-height:1.5;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{padding:6px 14px;border-radius:20px;border:1px solid #e8e8e5;font-size:13px;color:#6b6b68;cursor:pointer;background:#fff;transition:all .15s;font-family:inherit;}
+  .chip.on{border-color:#1a1a1a;color:#1a1a1a;background:#f5f5f3;}
+  .stars{display:flex;gap:4px;}
+  .star{font-size:24px;cursor:pointer;color:#e8e8e5;transition:color .1s;line-height:1;}
+  .star.on{color:#f59e0b;}
+  .btn-save{width:100%;padding:11px;border-radius:8px;background:#1a1a1a;color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;margin-top:4px;font-family:inherit;transition:opacity .15s;}
+  .btn-save:hover{opacity:.85;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px;}
+  .kpi{background:#fff;border:1px solid #e8e8e5;border-radius:10px;padding:14px 16px;}
+  .kpi-label{font-size:11px;color:#9b9b97;font-weight:500;margin-bottom:4px;}
+  .kpi-val{font-size:26px;font-weight:700;color:#1a1a1a;line-height:1.1;}
+  .kpi-sub{font-size:11px;color:#9b9b97;margin-top:2px;}
+  .sentence-box{background:#f5f5f3;border-radius:10px;padding:14px 16px;font-size:13px;color:#6b6b68;line-height:1.8;margin-bottom:20px;border:1px solid #e8e8e5;}
+  .sentence-box strong{color:#1a1a1a;font-weight:600;}
+  .divider{border:none;border-top:1px solid #e8e8e5;margin:20px 0;}
+  .chart-label{font-size:11px;font-weight:600;letter-spacing:.06em;color:#9b9b97;text-transform:uppercase;margin-bottom:12px;}
+  .stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0ee;font-size:13px;}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-key{color:#6b6b68;}
+  .stat-val{font-weight:600;color:#1a1a1a;}
+  .tbl-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;padding:9px 12px;background:#f5f5f3;font-size:11px;font-weight:600;color:#9b9b97;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid #e8e8e5;white-space:nowrap;}
+  td{padding:10px 12px;border-bottom:1px solid #f0f0ee;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#fafaf9;}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .bw{background:#fce7f3;color:#9d174d;}
+  .bc{background:#dbeafe;color:#1e40af;}
+  .bco{background:#dcfce7;color:#166534;}
+  .be{background:#f3f4f6;color:#374151;}
+  .del-btn{background:none;border:none;cursor:pointer;color:#d1d1ce;font-size:18px;padding:0 4px;transition:color .15s;}
+  .del-btn:hover{color:#ef4444;}
+  .empty{text-align:center;padding:48px 24px;color:#9b9b97;font-size:14px;line-height:1.8;}
+  .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .export-btn{padding:7px 14px;border-radius:7px;border:1px solid #e8e8e5;background:#fff;font-size:13px;color:#6b6b68;cursor:pointer;font-family:inherit;transition:background .15s;}
+  .export-btn:hover{background:#f5f5f3;}
+  .type-legend{display:flex;flex-direction:column;gap:8px;}
+  .type-legend-row{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .type-legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+  .type-legend-key{color:#6b6b68;}
+  .type-legend-val{font-weight:600;color:#1a1a1a;margin-left:auto;}
+  @media(max-width:600px){.g2{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  </div>
+  <h1>행사 기록 & 통계</h1>
+  <span class="header-sub">음향 · 영상 · 조명 담당자용</span>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab on" data-tab="form" onclick="switchTab('form',this)">기록 추가</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats',this)">통계 대시보드</button>
+    <button class="tab" data-tab="list" onclick="switchTab('list',this)">행사 목록</button>
+  </div>
+
+  <div id="db-loading" style="text-align:center;padding:40px;color:#9b9b97;font-size:13px;">🔄 데이터 불러오는 중...</div>
+  <div id="pane-form" class="pane on"></div>
+  <div id="pane-stats" class="pane"></div>
+  <div id="pane-list" class="pane"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+// Firebase 초기화
+firebase.initializeApp({
+  apiKey: "AIzaSyCSmsdcGLImyyS301ty1o0cBO1nANvKtIo",
+  authDomain: "av-techfocus-record.firebaseapp.com",
+  databaseURL: "https://av-techfocus-record-default-rtdb.firebaseio.com",
+  projectId: "av-techfocus-record",
+  storageBucket: "av-techfocus-record.firebasestorage.app",
+  messagingSenderId: "340001413536",
+  appId: "1:340001413536:web:ce3a947ba23790e884acc5"
+});
+const db = firebase.database();
+const DBREF = db.ref('events');
+
+let evs = [];
+
+// Firebase에서 실시간으로 데이터 로드
+let dbInited = false;
+function initDB(){
+  const loading = document.getElementById('db-loading');
+  DBREF.on('value', snapshot => {
+    const data = snapshot.val();
+    evs = data ? Object.values(data) : [];
+    evs.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(loading) loading.style.display='none';
+    // 현재 활성 탭 갱신
+    const activeTab = document.querySelector('.tab.on');
+    const tabName = activeTab ? activeTab.getAttribute('data-tab') : 'form';
+    if(!dbInited || tabName==='form') renderForm();
+    if(tabName==='stats') renderStats();
+    if(tabName==='list') renderList();
+    dbInited = true;
+  });
+}
+
+function persist(){
+  // Firebase에 전체 evs 동기화
+  const obj={};
+  evs.forEach(e=>{ obj[e.id]=e; });
+  DBREF.set(obj);
+}
+
+
+function getLabel(t){return{wedding:'웨딩',conference:'학회/컨퍼런스',corporate:'기업행사'}[t]||'기타';}
+function getBadge(t){return{wedding:'bw',conference:'bc',corporate:'bco'}[t]||'be';}
+function starStr(n){return'★'.repeat(n)+'☆'.repeat(5-n);}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['form','stats','list'].forEach(p=>{
+    document.getElementById('pane-'+p).classList.toggle('on',p===name);
+  });
+  if(name==='stats')renderStats();
+  if(name==='list')renderList();
+}
+
+function renderForm(){
+  const p=document.getElementById('pane-form');
+  const {stars,chips}=fs;
+  p.innerHTML=`
+    <div class="card">
+      <div class="sec-label">기본 정보</div>
+      <div class="g2">
+        <div class="f"><label>날짜</label><input type="date" id="fd"/></div>
+        <div class="f"><label>행사 유형</label>
+          <select id="ft">
+            <option value="wedding">웨딩</option>
+            <option value="conference">학회 / 컨퍼런스</option>
+            <option value="corporate">기업행사</option>
+            <option value="etc">기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="f" style="margin-bottom:12px;"><label>행사명</label><input type="text" id="fn" placeholder="예) OO웨딩홀 A홀 결혼식"/></div>
+      <div class="g2">
+        <div class="f"><label>장소</label><input type="text" id="fv" placeholder="예) 그랜드볼룸 3F"/></div>
+        <div class="f"><label>참석 인원</label><input type="number" id="fh" placeholder="명"/></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-label">담당 업무</div>
+      <div class="chips">
+        ${['audio:음향','video:영상','lighting:조명'].map(c=>{const[k,l]=c.split(':');return`<button class="chip chip-btn${chips[k]?' on':''}" data-key="${k}" onclick="toggleChip('${k}')">${l}</button>`;}).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec-label">장비 & 셋업</div>
+      <div class="f"><label>사용 장비</label><textarea id="feq" placeholder="예) Yamaha CL5 믹서, Shure ULX-D 무선마이크 4채널, Christie 15K 빔프로젝터 2대"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="sec-label">돌발 상황 & 대처</div>
+      <div class="f"><textarea id="ftr" placeholder="예) 리허설 중 마이크 피드백 발생 → 즉시 EQ 조정으로 해결"></textarea></div>
+    </div>
+    <div class="card">
+      <div class="sec-label">피드백 & 평가</div>
+      <div class="f" style="margin-bottom:12px;"><label>고객 / 상사 피드백</label><textarea id="ffb" placeholder="예) 음향 품질 매우 만족, 다음에도 같은 팀 요청"></textarea></div>
+      <div class="f"><label>만족도</label>
+        <div class="stars" id="star-row">
+          ${[1,2,3,4,5].map(i=>`<span class="star star-btn${stars>=i?' on':''}" onclick="setStar(${i})">★</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveEv()">저장하기</button>
+  `;
+  const d=document.getElementById('fd');
+  if(d&&!d.value){d.value=new Date().toISOString().split('T')[0];}
+}
+
+function toggleChip(k){
+  fs.chips[k]=!fs.chips[k];
+  document.querySelectorAll('.chip-btn').forEach(btn=>{
+    if(btn.dataset.key===k) btn.classList.toggle('on',fs.chips[k]);
+  });
+}
+function setStar(n){
+  fs.stars=n;
+  document.querySelectorAll('.star-btn').forEach((s,i)=>s.classList.toggle('on',i<n));
+}
+
+function saveEv(){
+  const name=(document.getElementById('fn')?.value||'').trim();
+  if(!name){alert('행사명을 입력해주세요.');return;}
+  evs.push({
+    id:Date.now(),
+    date:document.getElementById('fd')?.value||'',
+    type:document.getElementById('ft')?.value||'etc',
+    name,venue:(document.getElementById('fv')?.value||'').trim(),
+    headcount:parseInt(document.getElementById('fh')?.value)||0,
+    audio:fs.chips.audio,video:fs.chips.video,lighting:fs.chips.lighting,
+    equipment:(document.getElementById('feq')?.value||'').trim(),
+    trouble:(document.getElementById('ftr')?.value||'').trim(),
+    feedback:(document.getElementById('ffb')?.value||'').trim(),
+    satisfaction:fs.stars,
+  });
+  persist();
+  fs={stars:0,chips:{audio:false,video:false,lighting:false}};
+  renderForm();
+  document.querySelectorAll('.tab')[1].click();
+}
+
+function renderStats(){
+  const p=document.getElementById('pane-stats');
+  if(!evs.length){p.innerHTML='<div class="card"><div class="empty">아직 기록된 행사가 없어요.<br>기록 추가 탭에서 첫 행사를 입력해보세요!</div></div>';return;}
+  const total=evs.length;
+  const wedding=evs.filter(e=>e.type==='wedding').length;
+  const conf=evs.filter(e=>e.type==='conference').length;
+  const corp=evs.filter(e=>e.type==='corporate').length;
+  const etc=total-wedding-conf-corp;
+  const ws=evs.filter(e=>e.satisfaction>0);
+  const avg=ws.length?(ws.reduce((a,e)=>a+e.satisfaction,0)/ws.length).toFixed(1):'-';
+  const maxP=Math.max(...evs.map(e=>e.headcount||0));
+  const audioC=evs.filter(e=>e.audio).length;
+  const videoC=evs.filter(e=>e.video).length;
+  const lightC=evs.filter(e=>e.lighting).length;
+  const troubC=evs.filter(e=>e.trouble&&e.trouble.trim()).length;
+  const curY=new Date().getFullYear().toString();
+  const thisY=evs.filter(e=>(e.date||'').startsWith(curY)).length;
+  const mc=Array(12).fill(0);
+  evs.forEach(e=>{if(!e.date)return;const m=parseInt(e.date.split('-')[1])-1;if(m>=0&&m<12)mc[m]++;});
+
+  p.innerHTML=`
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">총 행사</div><div class="kpi-val">${total}</div><div class="kpi-sub">건</div></div>
+      <div class="kpi"><div class="kpi-label">웨딩</div><div class="kpi-val">${wedding}</div><div class="kpi-sub">건</div></div>
+      <div class="kpi"><div class="kpi-label">학회/컨퍼런스</div><div class="kpi-val">${conf}</div><div class="kpi-sub">건</div></div>
+      <div class="kpi"><div class="kpi-label">기업행사</div><div class="kpi-val">${corp}</div><div class="kpi-sub">건</div></div>
+      <div class="kpi"><div class="kpi-label">평균 만족도</div><div class="kpi-val">${avg}</div><div class="kpi-sub">/ 5.0</div></div>
+      <div class="kpi"><div class="kpi-label">최대 참석</div><div class="kpi-val">${maxP||'-'}</div><div class="kpi-sub">명</div></div>
+    </div>
+
+    <div class="sentence-box">
+      ${curY}년 총 <strong>${thisY}건</strong> 행사 운영 &nbsp;·&nbsp;
+      음향 <strong>${audioC}건</strong> / 영상 <strong>${videoC}건</strong> / 조명 <strong>${lightC}건</strong> &nbsp;·&nbsp;
+      최대 <strong>${maxP||0}명</strong> 규모 &nbsp;·&nbsp;
+      평균 만족도 <strong>${avg} / 5.0</strong> &nbsp;·&nbsp;
+      돌발 대응 <strong>${troubC}건</strong> 무중단 처리
+    </div>
+
+    <div class="card">
+      <div class="chart-label">월별 행사 건수</div>
+      <div style="position:relative;width:100%;height:200px;">
+        <canvas id="chartMonth" role="img" aria-label="월별 행사 건수">월별 행사 데이터</canvas>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="card">
+        <div class="chart-label">유형별 분포</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+          <div style="position:relative;width:140px;height:140px;flex-shrink:0;">
+            <canvas id="chartType" width="140" height="140" role="img" aria-label="유형별 분포">유형 데이터</canvas>
+          </div>
+          <div class="type-legend" style="width:100%;">
+            ${[['웨딩',wedding,'#f472b6'],['학회',conf,'#60a5fa'],['기업',corp,'#34d399'],['기타',etc,'#9ca3af']].map(([l,v,c])=>`
+            <div class="type-legend-row"><span class="type-legend-dot" style="background:${c}"></span><span class="type-legend-key">${l}</span><span class="type-legend-val" style="white-space:nowrap;">${v}건</span></div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chart-label">담당 업무 현황</div>
+        <div style="position:relative;width:100%;height:120px;">
+          <canvas id="chartRole" role="img" aria-label="담당 업무 현황">담당 데이터</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chart-label">상세 집계</div>
+      <div class="stat-row"><span class="stat-key">별점 5점 행사</span><span class="stat-val">${evs.filter(e=>e.satisfaction===5).length}건</span></div>
+      <div class="stat-row"><span class="stat-key">별점 4점 이상</span><span class="stat-val">${evs.filter(e=>e.satisfaction>=4).length}건</span></div>
+      <div class="stat-row"><span class="stat-key">100명 이상 행사</span><span class="stat-val">${evs.filter(e=>e.headcount>=100).length}건</span></div>
+      <div class="stat-row"><span class="stat-key">500명 이상 행사</span><span class="stat-val">${evs.filter(e=>e.headcount>=500).length}건</span></div>
+      <div class="stat-row"><span class="stat-key">음향 담당</span><span class="stat-val">${audioC}건 (${total?Math.round(audioC/total*100):0}%)</span></div>
+      <div class="stat-row"><span class="stat-key">영상 담당</span><span class="stat-val">${videoC}건 (${total?Math.round(videoC/total*100):0}%)</span></div>
+      <div class="stat-row"><span class="stat-key">조명 담당</span><span class="stat-val">${lightC}건 (${total?Math.round(lightC/total*100):0}%)</span></div>
+      <div class="stat-row"><span class="stat-key">돌발 대응 처리</span><span class="stat-val">${troubC}건</span></div>
+    </div>
+
+    <div style="text-align:right;">
+      <button class="export-btn" onclick="exportCSV()">CSV 내보내기 ↓</button>
+    </div>
+  `;
+
+  Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});
+  charts={};
+
+  charts.month=new Chart(document.getElementById('chartMonth'),{
+    type:'bar',
+    data:{labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+      datasets:[{data:mc,backgroundColor:'#1a1a1a',borderRadius:4,barThickness:16}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{stepSize:1},grid:{color:'#f0f0ee'}},x:{grid:{display:false},ticks:{autoSkip:false,font:{size:11}}}}}
+  });
+  const typeCanvas=document.getElementById('chartType');
+  typeCanvas.style.width='140px';
+  typeCanvas.style.height='140px';
+  charts.type=new Chart(typeCanvas,{
+    type:'doughnut',
+    data:{labels:['웨딩','학회','기업','기타'],
+      datasets:[{data:[wedding,conf,corp,etc],backgroundColor:['#f472b6','#60a5fa','#34d399','#9ca3af'],borderWidth:0}]},
+    options:{responsive:false,plugins:{legend:{display:false}},cutout:'62%'}
+  });
+  charts.role=new Chart(document.getElementById('chartRole'),{
+    type:'bar',
+    data:{labels:['음향','영상','조명'],
+      datasets:[{data:[audioC,videoC,lightC],backgroundColor:['#34d399','#60a5fa','#f59e0b'],borderRadius:4,barThickness:20}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{stepSize:1},grid:{color:'#f0f0ee'}},y:{grid:{display:false}}}}
+  });
+}
+
+function renderList(){
+  const p=document.getElementById('pane-list');
+  const sorted=[...evs].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!sorted.length){p.innerHTML='<div class="card"><div class="empty">아직 기록된 행사가 없어요.</div></div>';return;}
+  p.innerHTML=`
+    <div class="top-bar">
+      <span style="font-size:13px;color:#9b9b97;">총 ${sorted.length}건 · 최신순</span>
+      <button class="export-btn" onclick="exportCSV()">CSV 내보내기 ↓</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:95px;">날짜</th>
+              <th style="width:80px;">유형</th>
+              <th>행사명 / 장소</th>
+              <th style="width:70px;text-align:right;">인원</th>
+              <th style="width:130px;">담당</th>
+              <th style="width:90px;">만족도</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map(e=>`
+              <tr class="ev-row" onclick="showDetail(${e.id})" style="cursor:pointer;" title="클릭하면 세부내용 보기">
+                <td style="color:#9b9b97;font-size:12px;">${e.date||'-'}</td>
+                <td><span class="badge ${getBadge(e.type)}">${getLabel(e.type)}</span></td>
+                <td>
+                  <div style="font-weight:600;font-size:13px;">${e.name}</div>
+                  ${e.venue?`<div style="font-size:11px;color:#9b9b97;">${e.venue}</div>`:''}
+                </td>
+                <td style="text-align:right;font-size:13px;">${e.headcount?e.headcount+'명':'-'}</td>
+                <td style="font-size:12px;color:#6b6b68;">${[e.audio?'음향':'',e.video?'영상':'',e.lighting?'조명':''].filter(Boolean).join(' / ')||'-'}</td>
+                <td style="color:#f59e0b;font-size:13px;white-space:nowrap;">${e.satisfaction?starStr(e.satisfaction):'-'}</td>
+                <td><button class="del-btn" onclick="event.stopPropagation();delEv(${e.id})">×</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function showDetail(id){
+  const e=evs.find(x=>x.id===id);
+  if(!e)return;
+  const roles=[e.audio?'음향':'',e.video?'영상':'',e.lighting?'조명':''].filter(Boolean).join(' / ')||'-';
+  const overlay=document.createElement('div');
+  overlay.id='detail-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML=`
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #e8e8e5;position:sticky;top:0;background:#fff;border-radius:16px 16px 0 0;z-index:1;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1a1a1a;">${e.name}</div>
+          <div style="font-size:12px;color:#9b9b97;margin-top:3px;">${e.date||'-'} &nbsp;·&nbsp; <span class="badge ${getBadge(e.type)}">${getLabel(e.type)}</span></div>
+        </div>
+        <button onclick="closeDetail()" style="background:none;border:none;cursor:pointer;font-size:22px;color:#9b9b97;line-height:1;padding:4px;">×</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:11px;color:#9b9b97;font-weight:600;margin-bottom:4px;">장소</div>
+            <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${e.venue||'-'}</div>
+          </div>
+          <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:11px;color:#9b9b97;font-weight:600;margin-bottom:4px;">참석 인원</div>
+            <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${e.headcount?e.headcount+'명':'-'}</div>
+          </div>
+          <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:11px;color:#9b9b97;font-weight:600;margin-bottom:4px;">담당 업무</div>
+            <div style="font-size:14px;font-weight:600;color:#1a1a1a;">${roles}</div>
+          </div>
+          <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:11px;color:#9b9b97;font-weight:600;margin-bottom:4px;">만족도</div>
+            <div style="font-size:15px;color:#f59e0b;">${e.satisfaction?starStr(e.satisfaction):'미입력'}</div>
+          </div>
+        </div>
+        ${e.equipment?`
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#9b9b97;margin-bottom:6px;letter-spacing:.05em;">사용 장비</div>
+          <div style="background:#f5f5f3;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a1a1a;line-height:1.7;white-space:pre-wrap;">${e.equipment}</div>
+        </div>`:''}
+        ${e.trouble?`
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#9b9b97;margin-bottom:6px;letter-spacing:.05em;">돌발 상황 & 대처</div>
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a1a1a;line-height:1.7;white-space:pre-wrap;">${e.trouble}</div>
+        </div>`:''}
+        ${e.feedback?`
+        <div>
+          <div style="font-size:11px;font-weight:600;color:#9b9b97;margin-bottom:6px;letter-spacing:.05em;">피드백 & 평가</div>
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a1a1a;line-height:1.7;white-space:pre-wrap;">${e.feedback}</div>
+        </div>`:''}
+        ${!e.equipment&&!e.trouble&&!e.feedback?`<div style="text-align:center;padding:12px;color:#9b9b97;font-size:13px;">세부 메모 없음</div>`:''}
+        <div style="display:flex;gap:8px;padding-top:4px;">
+          <button onclick="closeDetail()" style="flex:1;padding:10px;border-radius:8px;border:1px solid #e8e8e5;background:#fff;font-size:14px;color:#6b6b68;cursor:pointer;font-family:inherit;">닫기</button>
+          <button onclick="closeDetail();delEv(${e.id})" style="padding:10px 18px;border-radius:8px;border:none;background:#fee2e2;color:#ef4444;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;">삭제</button>
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.addEventListener('click',ev=>{if(ev.target===overlay)closeDetail();});
+  document.body.appendChild(overlay);
+}
+
+function closeDetail(){
+  const o=document.getElementById('detail-overlay');
+  if(o)o.remove();
+}
+
+function delEv(id){
+  if(!confirm('이 기록을 삭제할까요?'))return;
+  evs=evs.filter(e=>e.id!==id);persist();renderList();
+}
+
+function exportCSV(){
+  const hd=['날짜','유형','행사명','장소','인원','음향','영상','조명','장비','돌발대응','피드백','만족도'];
+  const rows=evs.map(e=>[e.date,getLabel(e.type),e.name,e.venue,e.headcount,
+    e.audio?'O':'',e.video?'O':'',e.lighting?'O':'',e.equipment,e.trouble,e.feedback,e.satisfaction
+  ].map(v=>`"${String(v||'').replace(/"/g,'""')}"`));
+  const csv=[hd,...rows].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='행사기록.csv';a.click();
+}
+
+renderForm();
+initDB();
+</script>
+</body>
+</html>
